@@ -26,9 +26,12 @@ public class Guard : MonoBehaviour
     private Vector3[] patrollingPoints;
     [SerializeField]
     private NavMeshAgent agent;
+    [SerializeField]
+    private float waitTime;
 
     private GuardState state;
     private int currentIndex;
+    private int direction = -1;
 
     private void Awake()
     {
@@ -39,21 +42,43 @@ public class Guard : MonoBehaviour
         };
 
         _tree = new BehaviorTreeBuilder(gameObject)
-            .Sequence()
-                .Condition("Custom Condition", () => {
-                    return true;
-                })
-                .Do("Custom Action", () => {
-                    return TaskStatus.Success;
-                })
+            .Selector()
+                .Sequence("Start patrolling")
+                    .Condition("If we do nothing", () => {
+                        return state.Status == GuardStatus.Nothing;
+                    })
+                    .Do("Start patrolling", () => {
+                        StartPatrolling();
+                        state.HasReachedNextPoint = true;
+                        //MoveToNextPoint();
+                        return TaskStatus.Success;
+                    })
+                    .Do("Set guard status", () => {
+                        state.Status = GuardStatus.Patrolling;
+                        return TaskStatus.Success;
+                    })
+                .End()
+
+                .Sequence("Move to next point")
+                    .Condition("If we are patrolling", () => {
+                        return state.Status == GuardStatus.Patrolling;
+                    })
+                    .Condition("If we reaced next point", () => {
+                        return state.HasReachedNextPoint == true;
+                    })
+                    .WaitTime(waitTime)
+                    .Do("Move to next point", () => {
+                        MoveToNextPoint();
+                        return TaskStatus.Success;
+                    })
+                .End()
             .End()
             .Build();
     }
 
-
-    void Update()
+    private void Update()
     {
-        
+        _tree.Tick();
     }
 
     public void StartPatrolling()
@@ -65,7 +90,7 @@ public class Guard : MonoBehaviour
         {
             float distance = 0;
             agent.CalculatePath(patrollingPoints[i], path);
-            for (int j = 0; j < path.corners.Length; j++)
+            for (int j = 1; j < path.corners.Length; j++)
             {
                 distance += Vector3.Distance(path.corners[j - 1], path.corners[j]);
             }
@@ -78,7 +103,12 @@ public class Guard : MonoBehaviour
         currentIndex = closestPointIndex;
     }
 
-    private IEnumerator MoveToNextPoint()
+    public void MoveToNextPoint()
+    {
+        StartCoroutine(MoveToNextPointCoroutine());
+    }
+
+    private IEnumerator MoveToNextPointCoroutine()
     {
         state.HasReachedNextPoint = false;
         agent.SetDestination(patrollingPoints[currentIndex]);
@@ -90,6 +120,15 @@ public class Guard : MonoBehaviour
         {
             yield return null;
         }
+        if (currentIndex == patrollingPoints.Length - 1)
+        {
+            direction = -1;
+        }
+        else if (currentIndex == 0)
+        {
+            direction = 1;
+        }
+        currentIndex += direction;
         state.HasReachedNextPoint = true;
     }
 }
