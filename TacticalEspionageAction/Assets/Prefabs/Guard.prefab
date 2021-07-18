@@ -677,7 +677,7 @@ GameObject:
   - component: {fileID: 3186928826811242529}
   - component: {fileID: 3186928826811242527}
   - component: {fileID: 3186928826811242526}
-  - component: {fileID: 3919498277709355774}
+  - component: {fileID: 5334104482605226110}
   m_Layer: 0
   m_Name: Guard
   m_TagString: Untagged
@@ -800,7 +800,7 @@ MonoBehaviour:
   patrollingPoints: []
   agent: {fileID: 0}
   waitTime: 0
---- !u!114 &3919498277709355774
+--- !u!114 &5334104482605226110
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
