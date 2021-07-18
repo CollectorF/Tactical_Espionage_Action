@@ -15,12 +15,6 @@ public class PlayerController : MonoBehaviour
         playerCamera = Camera.main;
     }
 
-    private void Start()
-    {
-        
-    }
-
-
     private void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -31,5 +25,11 @@ public class PlayerController : MonoBehaviour
                 navMeshAgent.SetDestination(raycastHitInfo.point);
             }
         }
+    }
+
+    public void UnsetChild()
+    {
+        transform.SetParent(null);
+        playerCamera.transform.SetParent(null);
     }
 }
