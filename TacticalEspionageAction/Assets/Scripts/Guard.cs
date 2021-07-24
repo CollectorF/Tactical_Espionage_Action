@@ -1,5 +1,6 @@
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -15,34 +16,48 @@ public struct GuardState
 {
     public GuardStatus Status;
     public bool HasReachedNextPoint;
+    public Vector3 LastPlayerPosition;
 }
-
 
 public class Guard : MonoBehaviour
 {
     [SerializeField]
-    private BehaviorTree _tree;
+    private BehaviorTree guardBehaviorTree;
     [SerializeField]
     private Vector3[] patrollingPoints;
     [SerializeField]
     private NavMeshAgent agent;
     [SerializeField]
     private float waitTime;
+    [SerializeField]
+    private float speedWhenPatrolling = 2f;
+    [SerializeField]
+    private float speedWhenSuspicious = 3f;
 
     private GuardState state;
     private int currentIndex;
     private int direction = -1;
+    private Vision vision;
+    internal Coroutine guardCoroutine;
+
+    public delegate void PlayerCaughtUp();
+    public event PlayerCaughtUp TouchPlayer;
 
     private void Awake()
     {
+        vision = GetComponentInChildren<Vision>();
+        vision.SpotPlayer += VisionSpotPlayer;
+        vision.SeePlayer += VisionSeePlayer;
+
         state = new GuardState()
         {
             HasReachedNextPoint = false,
             Status = GuardStatus.Nothing
         };
 
-        _tree = new BehaviorTreeBuilder(gameObject)
+        guardBehaviorTree = new BehaviorTreeBuilder(gameObject)
             .Selector()
+
                 .Sequence("Start patrolling")
                     .Condition("If we do nothing", () => {
                         return state.Status == GuardStatus.Nothing;
@@ -50,7 +65,6 @@ public class Guard : MonoBehaviour
                     .Do("Start patrolling", () => {
                         StartPatrolling();
                         state.HasReachedNextPoint = true;
-                        //MoveToNextPoint();
                         return TaskStatus.Success;
                     })
                     .Do("Set guard status", () => {
@@ -63,14 +77,55 @@ public class Guard : MonoBehaviour
                     .Condition("If we are patrolling", () => {
                         return state.Status == GuardStatus.Patrolling;
                     })
-                    .Condition("If we reaced next point", () => {
+                    .Condition("If we reached next point", () => {
                         return state.HasReachedNextPoint == true;
                     })
                     .WaitTime(waitTime)
                     .Do("Move to next point", () => {
+                        agent.speed = speedWhenPatrolling;
                         MoveToNextPoint();
                         return TaskStatus.Success;
                     })
+                .End()
+
+                .Sequence("Chase player")
+                    .Condition("If player was spotted", () =>
+                    {
+                        return state.Status == GuardStatus.Suspicious;
+                    })
+                    .Do("Move to last player point", () => {
+                        agent.speed = speedWhenSuspicious;
+                        MoveToPosition(state.LastPlayerPosition);
+                        return TaskStatus.Success;
+                    })
+                        .Sequence("Continue patrolling")
+                            .Condition("If we reached last player point", () =>
+                            {
+                                return state.HasReachedNextPoint == true;
+                            })
+                            .WaitTime(waitTime)
+                            .Do("Look around", () => {
+                                LookAround(1f);
+                                return TaskStatus.Success;
+                            })
+                            .WaitTime(waitTime)
+                            .Do("Look around", () => {
+                                LookAround(-1f);
+                                return TaskStatus.Success;
+                            })
+                            .WaitTime(waitTime)
+                            .Do("Set guard status", () =>
+                            {
+                                Debug.Log("Returning to patrolling");
+                                agent.speed = speedWhenPatrolling;
+                                state.Status = GuardStatus.Patrolling;
+                                return TaskStatus.Success;
+                            })
+                            .Do("Move to next point", () => {
+                                MoveToNextPoint();
+                                return TaskStatus.Success;
+                            })
+                        .End()
                 .End()
             .End()
             .Build();
@@ -78,7 +133,7 @@ public class Guard : MonoBehaviour
 
     private void Update()
     {
-        _tree.Tick();
+        guardBehaviorTree.Tick();
     }
 
     public void StartPatrolling()
@@ -105,13 +160,27 @@ public class Guard : MonoBehaviour
 
     public void MoveToNextPoint()
     {
-        StartCoroutine(MoveToNextPointCoroutine());
+        state.HasReachedNextPoint = false;
+        if (guardCoroutine != null)
+        {
+            StopCoroutine(guardCoroutine);
+        }
+        guardCoroutine = StartCoroutine(MoveToNextPointCoroutine(patrollingPoints[currentIndex], ChooseNextPoint));
     }
 
-    private IEnumerator MoveToNextPointCoroutine()
+    public void MoveToPosition(Vector3 nextPosition)
     {
         state.HasReachedNextPoint = false;
-        agent.SetDestination(patrollingPoints[currentIndex]);
+        if (guardCoroutine != null)
+        {
+            StopCoroutine(guardCoroutine);
+        }
+        guardCoroutine = StartCoroutine(MoveToNextPointCoroutine(nextPosition, null));
+    }
+
+    private IEnumerator MoveToNextPointCoroutine(Vector3 nextPosition, Action OnFinishedMovement)
+    {
+        agent.SetDestination(nextPosition);
         while (agent.pathPending)
         {
             yield return null;
@@ -120,6 +189,11 @@ public class Guard : MonoBehaviour
         {
             yield return null;
         }
+        OnFinishedMovement?.Invoke();
+        state.HasReachedNextPoint = true;
+    }
+    private void ChooseNextPoint()
+    {
         if (currentIndex == patrollingPoints.Length - 1)
         {
             direction = -1;
@@ -129,6 +203,31 @@ public class Guard : MonoBehaviour
             direction = 1;
         }
         currentIndex += direction;
-        state.HasReachedNextPoint = true;
+    }
+    private void VisionSeePlayer(GameObject target)
+    {
+        state.LastPlayerPosition = target.transform.position;
+        state.Status = GuardStatus.Suspicious;
+    }
+
+    private void VisionSpotPlayer(GameObject target)
+    {
+        Debug.Log("I see you!");
+    }
+
+    private void LookAround(float delta)
+    {
+        var currentPosition = agent.transform.position;
+        agent.SetDestination(new Vector3(currentPosition.x + delta, currentPosition.y, currentPosition.z + delta));
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        Debug.Log("collision!");
+        if (other.transform.CompareTag("Player"))
+        {
+            
+            TouchPlayer?.Invoke();
+        }
     }
 }
