@@ -223,10 +223,8 @@ public class Guard : MonoBehaviour
 
     private void OnCollisionEnter(Collision other)
     {
-        Debug.Log("collision!");
         if (other.transform.CompareTag("Player"))
         {
-            
             TouchPlayer?.Invoke();
         }
     }
