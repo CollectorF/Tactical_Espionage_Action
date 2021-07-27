@@ -475,6 +475,10 @@ PrefabInstance:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3186928826811242526, guid: dfe5a3a98a54b4c40bbfad8d711f8dac, type: 3}
+      propertyPath: speedWhenPatrolling
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3186928826811242526, guid: dfe5a3a98a54b4c40bbfad8d711f8dac, type: 3}
       propertyPath: patrollingPoints.Array.size
       value: 5
       objectReference: {fileID: 0}

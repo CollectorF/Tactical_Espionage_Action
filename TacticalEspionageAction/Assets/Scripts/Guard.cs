@@ -34,7 +34,7 @@ public class Guard : MonoBehaviour
     [SerializeField]
     private float speedWhenSuspicious = 3f;
 
-    private GuardState state;
+    public GuardState state;
     private int currentIndex;
     private int direction = -1;
     private Vision vision;
@@ -55,34 +55,36 @@ public class Guard : MonoBehaviour
             Status = GuardStatus.Nothing
         };
 
-        guardBehaviorTree = new BehaviorTreeBuilder(gameObject)
+        var injectTree = new BehaviorTreeBuilder(gameObject)
             .Selector()
 
                 .Sequence("Start patrolling")
-                    .Condition("If we do nothing", () => {
+                    .Condition("If we do nothing", () =>
+                    {
                         return state.Status == GuardStatus.Nothing;
                     })
-                    .Do("Start patrolling", () => {
+                    .Do("Start patrolling", () =>
+                    {
                         StartPatrolling();
                         state.HasReachedNextPoint = true;
                         return TaskStatus.Success;
                     })
-                    .Do("Set guard status", () => {
-                        state.Status = GuardStatus.Patrolling;
-                        return TaskStatus.Success;
-                    })
+                    .SendTextMsg("Send text message", "Starting patrolling")
+                    .SetGuardStatus("Set status 'Patrolling'", GuardStatus.Patrolling, speedWhenPatrolling)
                 .End()
 
                 .Sequence("Move to next point")
-                    .Condition("If we are patrolling", () => {
+                    .Condition("If we are patrolling", () =>
+                    {
                         return state.Status == GuardStatus.Patrolling;
                     })
-                    .Condition("If we reached next point", () => {
+                    .Condition("If we reached next point", () =>
+                    {
                         return state.HasReachedNextPoint == true;
                     })
                     .WaitTime(waitTime)
-                    .Do("Move to next point", () => {
-                        agent.speed = speedWhenPatrolling;
+                    .Do("Move to next point", () =>
+                    {
                         MoveToNextPoint();
                         return TaskStatus.Success;
                     })
@@ -93,7 +95,8 @@ public class Guard : MonoBehaviour
                     {
                         return state.Status == GuardStatus.Suspicious;
                     })
-                    .Do("Move to last player point", () => {
+                    .Do("Move to last player point", () =>
+                    {
                         agent.speed = speedWhenSuspicious;
                         MoveToPosition(state.LastPlayerPosition);
                         return TaskStatus.Success;
@@ -104,30 +107,31 @@ public class Guard : MonoBehaviour
                                 return state.HasReachedNextPoint == true;
                             })
                             .WaitTime(waitTime)
-                            .Do("Look around", () => {
+                            .Do("Look around", () =>
+                            {
                                 LookAround(1f);
                                 return TaskStatus.Success;
                             })
                             .WaitTime(waitTime)
-                            .Do("Look around", () => {
+                            .Do("Look around", () =>
+                            {
                                 LookAround(-1f);
                                 return TaskStatus.Success;
                             })
                             .WaitTime(waitTime)
-                            .Do("Set guard status", () =>
+                            .SendTextMsg("Send text message", "Returning to patrolling")
+                            .SetGuardStatus("Set status 'Patrolling'", GuardStatus.Patrolling, speedWhenPatrolling)
+                            .Do("Move to next point", () =>
                             {
-                                Debug.Log("Returning to patrolling");
-                                agent.speed = speedWhenPatrolling;
-                                state.Status = GuardStatus.Patrolling;
-                                return TaskStatus.Success;
-                            })
-                            .Do("Move to next point", () => {
                                 MoveToNextPoint();
                                 return TaskStatus.Success;
                             })
                         .End()
                 .End()
-            .End()
+            .End();
+
+        guardBehaviorTree = new BehaviorTreeBuilder(gameObject)
+            .Splice(injectTree.Build())
             .Build();
     }
 
