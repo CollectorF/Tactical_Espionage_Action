@@ -22,3 +22,14 @@ public class SetGuardStatus : ActionBase
         return TaskStatus.Success;
     }
 }
+
+public class SendTextMsg : ActionBase
+{
+    public string Msg;
+
+    protected override TaskStatus OnUpdate()
+    {
+        Debug.Log(Msg);
+        return TaskStatus.Success;
+    }
+}
