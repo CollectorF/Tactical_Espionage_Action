@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
+using TMPro;
 
 public enum GuardStatus
 {
@@ -33,21 +34,32 @@ public class Guard : MonoBehaviour
     private float speedWhenPatrolling = 2f;
     [SerializeField]
     private float speedWhenSuspicious = 3f;
+    [SerializeField]
+    private GameObject statePod;
 
     public GuardState state;
+    public TMP_Text statePodText;
     private int currentIndex;
     private int direction = -1;
     private Vision vision;
     internal Coroutine guardCoroutine;
+    private Camera playerCamera;
 
     public delegate void PlayerCaughtUp();
     public event PlayerCaughtUp TouchPlayer;
+    public delegate void PlayerSpotted();
+    public event PlayerSpotted SpotPlayer;
+    public delegate void PlayerLost();
+    public event PlayerLost LoosePlayer;
 
     private void Awake()
     {
+        playerCamera = Camera.main;
+
         vision = GetComponentInChildren<Vision>();
         vision.SpotPlayer += VisionSpotPlayer;
         vision.SeePlayer += VisionSeePlayer;
+        statePodText = statePod.GetComponentInChildren<TMP_Text>();
 
         state = new GuardState()
         {
@@ -69,6 +81,7 @@ public class Guard : MonoBehaviour
                         state.HasReachedNextPoint = true;
                         return TaskStatus.Success;
                     })
+                    .SetVisualStateHint(null, Color.clear)
                     .SendTextMsg("Send text message", "Starting patrolling")
                     .SetGuardStatus("Set status 'Patrolling'", GuardStatus.Patrolling, speedWhenPatrolling)
                 .End()
@@ -95,6 +108,7 @@ public class Guard : MonoBehaviour
                     {
                         return state.Status == GuardStatus.Suspicious;
                     })
+                    .SetVisualStateHint("!", Color.red)
                     .Do("Move to last player point", () =>
                     {
                         agent.speed = speedWhenSuspicious;
@@ -106,6 +120,7 @@ public class Guard : MonoBehaviour
                             {
                                 return state.HasReachedNextPoint == true;
                             })
+                            .SetVisualStateHint("?", Color.yellow)
                             .WaitTime(waitTime)
                             .Do("Look around", () =>
                             {
@@ -119,6 +134,12 @@ public class Guard : MonoBehaviour
                                 return TaskStatus.Success;
                             })
                             .WaitTime(waitTime)
+                            .SetVisualStateHint(null, Color.clear)
+                            .Do("Look around", () =>
+                            {
+                                LoosePlayer?.Invoke();
+                                return TaskStatus.Success;
+                            })
                             .SendTextMsg("Send text message", "Returning to patrolling")
                             .SetGuardStatus("Set status 'Patrolling'", GuardStatus.Patrolling, speedWhenPatrolling)
                             .Do("Move to next point", () =>
@@ -138,6 +159,7 @@ public class Guard : MonoBehaviour
     private void Update()
     {
         guardBehaviorTree.Tick();
+        statePod.transform.eulerAngles = new Vector3(20f, playerCamera.transform.rotation.y - 90f, 0);
     }
 
     public void StartPatrolling()
@@ -217,6 +239,7 @@ public class Guard : MonoBehaviour
     private void VisionSpotPlayer(GameObject target)
     {
         Debug.Log("I see you!");
+        SpotPlayer?.Invoke();
     }
 
     private void LookAround(float delta)

@@ -2,6 +2,7 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Tasks.Actions;
 using UnityEngine;
 using UnityEngine.AI;
+using TMPro;
 
 public class SetGuardStatus : ActionBase
 {
@@ -30,6 +31,25 @@ public class SendTextMsg : ActionBase
     protected override TaskStatus OnUpdate()
     {
         Debug.Log(Msg);
+        return TaskStatus.Success;
+    }
+}
+
+public class SetVisualStateHint : ActionBase
+{
+    public Color ColorToSet;
+    public string TextToSet;
+    private Guard guard;
+
+    protected override void OnInit()
+    {
+        guard = Owner.GetComponent<Guard>();
+    }
+
+    protected override TaskStatus OnUpdate()
+    {
+        guard.statePodText.text = TextToSet;
+        guard.statePodText.color = ColorToSet;
         return TaskStatus.Success;
     }
 }

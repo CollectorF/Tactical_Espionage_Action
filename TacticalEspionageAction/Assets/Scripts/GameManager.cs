@@ -12,6 +12,10 @@ public class GameManager : MonoBehaviour
     private PlayerController player;
     [SerializeField]
     private TargetPoint targetPoint;
+    [SerializeField]
+    private AudioSource audioSourceRegular;
+    [SerializeField]
+    private AudioSource audioSourceAlert;
 
     private PlayableDirector currentDirector;
     private bool sceneIsSkipped = true;
@@ -22,6 +26,8 @@ public class GameManager : MonoBehaviour
         foreach (var guard in guards)
         {
             guard.TouchPlayer += LooseGame;
+            guard.SpotPlayer += SpotPlayer;
+            guard.LoosePlayer += LoosePlayer;
         }
         targetPoint.OnPlayerOnPoint += WinGame;
     }
@@ -66,9 +72,25 @@ public class GameManager : MonoBehaviour
         playerAgent.isStopped = true;
     }
 
-    public void GetDirector(PlayableDirector director)
+    private void GetDirector(PlayableDirector director)
     {
         sceneIsSkipped = false;
         currentDirector = director;
+    }
+
+    public void StartBackgroundAudio()
+    {
+        audioSourceRegular.Play();
+    }
+    private void SpotPlayer()
+    {
+        audioSourceRegular.Pause();
+        audioSourceAlert.Play();
+    }
+
+    private void LoosePlayer()
+    {
+        audioSourceRegular.UnPause();
+        audioSourceAlert.Stop();
     }
 }

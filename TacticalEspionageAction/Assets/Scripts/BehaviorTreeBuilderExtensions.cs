@@ -1,4 +1,5 @@
 using CleverCrow.Fluid.BTs.Trees;
+using UnityEngine;
 
 public static class BehaviorTreeBuilderExtensions
 {
@@ -18,6 +19,15 @@ public static class BehaviorTreeBuilderExtensions
         {
             Msg = msg,
             Name = name,
+        });
+    }
+
+    public static BehaviorTreeBuilder SetVisualStateHint(this BehaviorTreeBuilder builder, string hintText, Color hintColor)
+    {
+        return builder.AddNode(new SetVisualStateHint
+        {
+            TextToSet = hintText,
+            ColorToSet = hintColor,
         });
     }
 }
