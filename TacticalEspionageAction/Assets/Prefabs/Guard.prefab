@@ -813,11 +813,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   patrollingPoints: []
   agent: {fileID: 0}
-  waitTime: 0
-  speedWhenPatrolling: 2
-  speedWhenSuspicious: 3
   statePod: {fileID: 6331312177007091171}
-  statePodColor: {fileID: 0}
+  starterInfo: {fileID: 11400000, guid: 264c78790e43b3046b3611a349151745, type: 2}
   statePodText: {fileID: 4332954478587500102}
 --- !u!1 &3676366302155692768
 GameObject:

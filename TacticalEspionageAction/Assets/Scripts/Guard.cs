@@ -29,13 +29,9 @@ public class Guard : MonoBehaviour
     [SerializeField]
     private NavMeshAgent agent;
     [SerializeField]
-    private float waitTime;
-    [SerializeField]
-    private float speedWhenPatrolling = 2f;
-    [SerializeField]
-    private float speedWhenSuspicious = 3f;
-    [SerializeField]
     private GameObject statePod;
+    [SerializeField]
+    private GuardStarterInfo starterInfo;
 
     public GuardState state;
     public TMP_Text statePodText;
@@ -44,6 +40,9 @@ public class Guard : MonoBehaviour
     private Vision vision;
     internal Coroutine guardCoroutine;
     private Camera playerCamera;
+    private float waitTime;
+    private float speedWhenPatrolling;
+    private float speedWhenSuspicious;
 
     public delegate void PlayerCaughtUp();
     public event PlayerCaughtUp TouchPlayer;
@@ -60,6 +59,10 @@ public class Guard : MonoBehaviour
         vision.SpotPlayer += VisionSpotPlayer;
         vision.SeePlayer += VisionSeePlayer;
         statePodText = statePod.GetComponentInChildren<TMP_Text>();
+
+        waitTime = starterInfo.waitTime;
+        speedWhenPatrolling = starterInfo.speedWhenPatrolling;
+        speedWhenSuspicious = starterInfo.speedWhenSuspicious;
 
         state = new GuardState()
         {

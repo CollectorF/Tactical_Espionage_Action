@@ -5,15 +5,18 @@ using TMPro;
 
 public class UIManager : MonoBehaviour
 {
+    [SerializeField]
     private TMP_Text uiDeathText;
+    [SerializeField]
+    private TMP_Text uiSpotText;
 
     private void Awake()
     {
-        uiDeathText = GetComponentInChildren<TMP_Text>();
         gameObject.SetActive(false);
     }
-    public void SetTextInfo(int score)
+    public void SetTextInfo(int dead, int spot)
     {
-        uiDeathText.text = $"You died {score} times!";
+        uiDeathText.text = $"You died {dead} times!";
+        uiSpotText.text = $"You've been spotted {spot} times!";
     }
 }

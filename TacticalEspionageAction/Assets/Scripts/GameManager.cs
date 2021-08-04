@@ -23,7 +23,9 @@ public class GameManager : MonoBehaviour
     private bool sceneIsSkipped = true;
     private float skipTime;
     private int deathCounter;
+    private int spotCounter;
     private string DEATH_KEY = "death_key";
+    private string SPOT_KEY = "spot_key";
 
     private void Start()
     {
@@ -34,13 +36,14 @@ public class GameManager : MonoBehaviour
             guard.LoosePlayer += LoosePlayer;
         }
         targetPoint.OnPlayerOnPoint += WinGame;
-        SetDeathCounter(PlayerPrefs.GetInt(DEATH_KEY, 0));
+        SetCounters(PlayerPrefs.GetInt(DEATH_KEY, 0), PlayerPrefs.GetInt(SPOT_KEY, 0));
     }
 
-    private void SetDeathCounter(int counter)
+    private void SetCounters(int deathCounter, int spotCounter)
     {
-        deathCounter = counter;
-        uiManager.SetTextInfo(counter);
+        this.deathCounter = deathCounter;
+        this.spotCounter = spotCounter;
+        uiManager.SetTextInfo(deathCounter, spotCounter);
     }
 
     private void Update()
@@ -57,7 +60,7 @@ public class GameManager : MonoBehaviour
     {
         DisableAllGuards();
         DisablePlayer();
-        SetDeathCounter(deathCounter + 1);
+        SetCounters(deathCounter + 1, spotCounter);
         Debug.Log("Game over!");
     }
 
@@ -98,6 +101,7 @@ public class GameManager : MonoBehaviour
     {
         audioSourceRegular.Pause();
         audioSourceAlert.Play();
+        SetCounters(deathCounter, spotCounter + 1);
     }
 
     private void LoosePlayer()
@@ -109,6 +113,7 @@ public class GameManager : MonoBehaviour
     private void OnDestroy()
     {
         PlayerPrefs.SetInt(DEATH_KEY, deathCounter);
+        PlayerPrefs.SetInt(SPOT_KEY, spotCounter);
         PlayerPrefs.Save();
     }
 
