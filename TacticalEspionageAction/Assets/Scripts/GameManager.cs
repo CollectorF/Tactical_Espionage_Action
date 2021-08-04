@@ -16,10 +16,14 @@ public class GameManager : MonoBehaviour
     private AudioSource audioSourceRegular;
     [SerializeField]
     private AudioSource audioSourceAlert;
+    [SerializeField]
+    private UIManager uiManager;
 
     private PlayableDirector currentDirector;
     private bool sceneIsSkipped = true;
     private float skipTime;
+    private int deathCounter;
+    private string DEATH_KEY = "death_key";
 
     private void Start()
     {
@@ -30,6 +34,13 @@ public class GameManager : MonoBehaviour
             guard.LoosePlayer += LoosePlayer;
         }
         targetPoint.OnPlayerOnPoint += WinGame;
+        SetDeathCounter(PlayerPrefs.GetInt(DEATH_KEY, 0));
+    }
+
+    private void SetDeathCounter(int counter)
+    {
+        deathCounter = counter;
+        uiManager.SetTextInfo(counter);
     }
 
     private void Update()
@@ -44,16 +55,17 @@ public class GameManager : MonoBehaviour
 
     private void LooseGame()
     {
-        Debug.Log("Game over!");
         DisableAllGuards();
         DisablePlayer();
+        SetDeathCounter(deathCounter + 1);
+        Debug.Log("Game over!");
     }
 
     private void WinGame()
     {
-        Debug.Log("You win!");
         DisableAllGuards();
         DisablePlayer();
+        Debug.Log("You win!");
     }
 
     private void DisableAllGuards()
@@ -92,5 +104,17 @@ public class GameManager : MonoBehaviour
     {
         audioSourceRegular.UnPause();
         audioSourceAlert.Stop();
+    }
+
+    private void OnDestroy()
+    {
+        PlayerPrefs.SetInt(DEATH_KEY, deathCounter);
+        PlayerPrefs.Save();
+    }
+
+    [ContextMenu("Clear PlayerPrefs")]
+    private void ClearPlayerPrefs()
+    {
+        PlayerPrefs.DeleteAll();
     }
 }
