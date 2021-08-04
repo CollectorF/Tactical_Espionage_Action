@@ -113,8 +113,13 @@ public class GameManager : MonoBehaviour
     }
 
     [ContextMenu("Clear PlayerPrefs")]
-    private void ClearPlayerPrefs()
+    public void ClearPlayerPrefs()
     {
         PlayerPrefs.DeleteAll();
+    }
+
+    public void QuitApp()
+    {
+        Application.Quit();
     }
 }
