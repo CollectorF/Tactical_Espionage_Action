@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.fluid.behavior-tree": {
-      "version": "file:D:/Vadim/Work/Study/Unity/!Ref/Scripts/dist",
+      "version": "file:D:/Vadim/Work/Unity/Resources/Scripts/dist",
       "depth": 0,
       "source": "local",
       "dependencies": {}

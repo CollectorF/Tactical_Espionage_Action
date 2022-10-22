@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.fluid.behavior-tree": "file:D:/Vadim/Work/Study/Unity/!Ref/Scripts/dist",
+    "com.fluid.behavior-tree": "file:D:/Vadim/Work/Unity/Resources/Scripts/dist",
     "com.unity.collab-proxy": "1.5.7",
     "com.unity.ide.rider": "2.0.7",
     "com.unity.ide.visualstudio": "2.0.11",
